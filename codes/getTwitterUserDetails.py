@@ -1,0 +1,72 @@
+import tweepy
+from tweepy import OAuthHandler
+import sys
+import ConfigParser
+from pymongo import MongoClient
+import datetime
+
+# Mongo Settings
+# Connect to MongoDB
+client = MongoClient("hpc.iiitd.edu.in", 27017, maxPoolSize=50)
+
+# Connect to db bitcoindb
+db=client.activeprobing
+
+settings_file = sys.argv[1]
+
+#This file creates user-language feature generation
+if len(sys.argv) < 1:
+    print """
+        Command : python userLanguages.py <inp-file> <settings-file>
+        (IN OUR CASE)
+        python userLanguages.py ../../Dataset/username_userID.csv ../settings.txt
+    """
+    sys.exit(1)
+
+# Read config settings
+config = ConfigParser.ConfigParser()
+config.readfp(open(settings_file))
+
+CONSUMER_KEY = config.get('API Keys 1', 'API_KEY')
+CONSUMER_SECRET = config.get('API Keys 1', 'API_SECRET')
+ACCESS_KEY = config.get('API Keys 1', 'ACCESS_TOKEN')
+ACCESS_SECRET = config.get('API Keys 1', 'ACCESS_TOKEN_SECRET')
+
+auth = OAuthHandler(CONSUMER_KEY,CONSUMER_SECRET)
+api = tweepy.API(auth)
+auth.set_access_token(ACCESS_KEY, ACCESS_SECRET)
+
+#search
+api = tweepy.API(auth)
+
+# Get list of userIDs in mongo
+allUserIDs = db.freemiumusers.distinct("id")
+
+userList = [21447363]
+for users in userList:
+	# Tweepy API get user details
+	result = api.get_user(user_id=users)
+
+	# Check whether the user is already present in mongo
+	if users not in allUserIDs:
+		# Insert into mongo
+		insertMongo = db.freemiumusers.insert_one(result._json)
+
+	# Check for changes
+	userMongoDetails = db.freemiumusers.find({'id':users}, {'friends_count': 1, 'followers_count': 1})
+	for values in userMongoDetails:
+		existingFollowers = values['followers_count']
+		existingFriends = values['friends_count']
+	
+	# New followers
+	newFollowers = result._json['followers_count']
+	newFriends = result._json['friends_count']
+
+	print  existingFollowers, existingFriends, newFollowers, newFriends
+
+	# Check if followers and friends are same as exist in mongo
+	if newFollowers != existingFollowers or newFriends != existingFriends:
+		changeVals = {'timestamp': datetime.datetime.now(),'followers_count':newFollowers, 'friends_count': newFriends}
+		db.freemiumusers.update({}, {'$push': {"changes": changeVals}}, False, True)
+
+
