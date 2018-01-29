@@ -4,6 +4,7 @@ import sys
 import ConfigParser
 from pymongo import MongoClient
 import datetime
+from random import randint
 
 # Mongo Settings
 # Connect to MongoDB
@@ -27,10 +28,13 @@ if len(sys.argv) < 1:
 config = ConfigParser.ConfigParser()
 config.readfp(open(settings_file))
 
-CONSUMER_KEY = config.get('API Keys 1', 'API_KEY')
-CONSUMER_SECRET = config.get('API Keys 1', 'API_SECRET')
-ACCESS_KEY = config.get('API Keys 1', 'ACCESS_TOKEN')
-ACCESS_SECRET = config.get('API Keys 1', 'ACCESS_TOKEN_SECRET')
+# Random API key selection 
+randVal = randint(1,8)
+CONSUMER_KEY = config.get('API Keys ' + str(randVal), 'API_KEY')
+CONSUMER_SECRET = config.get('API Keys ' + str(randVal), 'API_SECRET')
+ACCESS_KEY = config.get('API Keys ' + str(randVal), 'ACCESS_TOKEN')
+ACCESS_SECRET = config.get('API Keys ' + str(randVal), 'ACCESS_TOKEN_SECRET')
+
 
 auth = OAuthHandler(CONSUMER_KEY,CONSUMER_SECRET)
 api = tweepy.API(auth)
@@ -42,7 +46,7 @@ api = tweepy.API(auth)
 # Get list of userIDs in mongo
 allUserIDs = db.freemiumusers.distinct("id")
 
-userList = [21447363]
+userList = [956233635325132800]
 for users in userList:
 	# Tweepy API get user details
 	result = api.get_user(user_id=users)
@@ -61,12 +65,14 @@ for users in userList:
 	# New followers
 	newFollowers = result._json['followers_count']
 	newFriends = result._json['friends_count']
+	noOfFavourites = result._json['favourites_count']
+	noOfTweets = result._json['statuses_count']
 
 	print  existingFollowers, existingFriends, newFollowers, newFriends
 
 	# Check if followers and friends are same as exist in mongo
 	if newFollowers != existingFollowers or newFriends != existingFriends:
-		changeVals = {'timestamp': datetime.datetime.now(),'followers_count':newFollowers, 'friends_count': newFriends}
+		changeVals = {'timestamp': datetime.datetime.now(),'followers_count':newFollowers, 'friends_count': newFriends, 'favourites_count': noOfFavourites, 'statuses_count': statuses_count}
 		db.freemiumusers.update({}, {'$push': {"changes": changeVals}}, False, True)
 
 
