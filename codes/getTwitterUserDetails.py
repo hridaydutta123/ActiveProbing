@@ -46,7 +46,7 @@ api = tweepy.API(auth)
 # Get list of userIDs in mongo
 allUserIDs = db.freemiumusers.distinct("id")
 
-userList = [956233635325132800]
+userList = [956233635325132800, 170995068]
 for users in userList:
 	# Tweepy API get user details
 	result = api.get_user(user_id=users)
@@ -57,10 +57,18 @@ for users in userList:
 		insertMongo = db.freemiumusers.insert_one(result._json)
 
 	# Check for changes
-	userMongoDetails = db.freemiumusers.find({'id':users}, {'friends_count': 1, 'followers_count': 1})
-	for values in userMongoDetails:
-		existingFollowers = values['followers_count']
-		existingFriends = values['friends_count']
+	userMongoDetails = db.freemiumusers.find({ "id": users})
+	isChangesExist = False
+	for details in userMongoDetails:
+		if 'changes' in details:
+			# Get last update value
+			existingFollowers = details['changes'][len(details['changes'])-1]['followers_count']
+			existingFriends = details['changes'][len(details['changes'])-1]['friends_count']
+		else:
+			existingFollowers = details['followers_count']
+			existingFriends = details['friends_count']
+
+	#userMongoDetails = db.freemiumusers.find({'id':users}, {'friends_count': 1, 'followers_count': 1})
 	
 	# New followers
 	newFollowers = result._json['followers_count']
@@ -68,11 +76,11 @@ for users in userList:
 	noOfFavourites = result._json['favourites_count']
 	noOfTweets = result._json['statuses_count']
 
-	print  existingFollowers, existingFriends, newFollowers, newFriends
+	print result._json['name'], existingFollowers, existingFriends, newFollowers, newFriends
 
 	# Check if followers and friends are same as exist in mongo
 	if newFollowers != existingFollowers or newFriends != existingFriends:
-		changeVals = {'timestamp': datetime.datetime.now(),'followers_count':newFollowers, 'friends_count': newFriends, 'favourites_count': noOfFavourites, 'statuses_count': statuses_count}
+		changeVals = {'timestamp': datetime.datetime.now(),'followers_count':newFollowers, 'friends_count': newFriends, 'favourites_count': noOfFavourites, 'statuses_count': noOfTweets}
 		db.freemiumusers.update({}, {'$push': {"changes": changeVals}}, False, True)
 
 
