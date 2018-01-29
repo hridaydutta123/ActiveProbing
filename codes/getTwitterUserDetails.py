@@ -81,6 +81,6 @@ for users in userList:
 	# Check if followers and friends are same as exist in mongo
 	if newFollowers != existingFollowers or newFriends != existingFriends:
 		changeVals = {'timestamp': datetime.datetime.now(),'followers_count':newFollowers, 'friends_count': newFriends, 'favourites_count': noOfFavourites, 'statuses_count': noOfTweets}
-		db.freemiumusers.update({}, {'$push': {"changes": changeVals}}, False, True)
+		db.freemiumusers.update({'id':users}, {'$push': {"changes": changeVals}}, False, True)
 
 
