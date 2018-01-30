@@ -49,7 +49,6 @@ allUserIDs = db.followerID.distinct("id")
 
 userList = [956233635325132800, 170995068]
 for users in userList:
-	followerof = {}
 	# Tweepy API get user details
 	result = api.get_user(user_id=users)
 
@@ -80,20 +79,26 @@ for users in userList:
 	    print "Error: %s" % e
 
 	# Check for changes
-	userMongoDetails = db.followerID.find({ "id": users})
+	userMongoDetails = db.followerID.find({"id": users})
 
+	firstTime = False
 	for details in userMongoDetails:
 		if 'changes' in details:
 			# Get last update value
 			existingFollowersIDs = details['changes'][len(details['changes'])-1]['followerids']
 			existingFriendsIDS = details['changes'][len(details['changes'])-1]['friendsids']
+		elif 'followerids' not in details:
+			changeVals = {'timestamp': datetime.datetime.now(),'followerids':followerids, 'friendsids': friendsids}	
+			db.followerID.update({'id':users}, {'$push': {"changes": changeVals}}, False, True)
+			firstTime = True
 		else:
 			existingFollowersIDs = details['followersids']
 			existingFriendsIDS = details['friendsids']
 
-		# If same no. of followers/followees in two successive iteration
-		if followerids and existingFollowersIDs and existingFriendsIDS and friendsids:
-			if set(followerids[0]) == set(existingFollowersIDs[0]) and set(friendsids[0]) == set(existingFriendsIDS[0]):
-				continue
-		changeVals = {'timestamp': datetime.datetime.now(),'followerids':followerids, 'friendsids': friendsids}	
-		db.followerID.update({'id':users}, {'$push': {"changes": changeVals}}, False, True)
+		if firstTime != True:
+			# If same no. of followers/followees in two successive iteration
+			if followerids and existingFollowersIDs and existingFriendsIDS and friendsids:
+				if set(followerids[0]) == set(existingFollowersIDs[0]) and set(friendsids[0]) == set(existingFriendsIDS[0]):
+					continue
+			changeVals = {'timestamp': datetime.datetime.now(),'followerids':followerids, 'friendsids': friendsids}	
+			db.followerID.update({'id':users}, {'$push': {"changes": changeVals}}, False, True)
