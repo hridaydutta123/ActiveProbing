@@ -41,14 +41,23 @@ auth.set_access_token(ACCESS_KEY, ACCESS_SECRET)
 
 #search
 api = tweepy.API(auth)
-userList = [956233635325132800, 891387302781386752, 958587449416044544]
+userList = [956233635325132800]
 tweets = []
 
 for users in userList:
 	for status in tweepy.Cursor(api.user_timeline, users).items():
-		with open("../data/" + str(users) + "_tweet_details.csv","a") as fp:
-			fp.write(str(datetime.datetime.now()) + "," + str(users) + "," + str(status._json) + "\n")
-		#insertMongo = db.tweets.insert_one(status._json)
-		# for reTweet in api.retweets(status._json['id'],200):
-		# 	details = reTweet._json
-#db.tweets.update({'id':users}, {'$push': {"changes": {"timestamp":datetime.datetime.now(),"details":details}}}, False, True)			
+		retweeters = []
+		retweeter_details = []
+		for reTweet in api.retweets(status._json['id'],200):
+			retweeters.append(reTweet._json['user']['id'])
+		for rts in retweeters:
+			# print rts
+			try:
+				result = api.get_user(user_id=rts)
+				retweeter_details.append(result._json)
+			except Exception,e:
+			    print "Error: %s" % e[0][0]['code']
+	
+		with open("../data/" + str(users) + "_retweeter_details.csv","a") as fp:
+				fp.write(str(datetime.datetime.now()) + "," + str(users) + "," + str(status._json['id']) + "," + str(retweeter_details) + "\n\n")
+		

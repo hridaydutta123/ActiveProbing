@@ -46,7 +46,7 @@ api = tweepy.API(auth)
 # Get list of userIDs in mongo
 allUserIDs = db.freemiumusers.distinct("id")
 
-userList = [956233635325132800, 170995068]
+userList = [956233635325132800, 891387302781386752, 958587449416044544]
 for users in userList:
 	# Tweepy API get user details
 	result = api.get_user(user_id=users)

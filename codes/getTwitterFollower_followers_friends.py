@@ -45,18 +45,17 @@ auth.set_access_token(ACCESS_KEY, ACCESS_SECRET)
 api = tweepy.API(auth)
 
 # Get list of userIDs in mongo
-allUserIDs = db.followerDetails.distinct("id")
+allUserIDs = db.followerID.distinct("id")
 
 userList = [956233635325132800, 170995068]
 for users in userList:
-	followerof = {}
 	# Tweepy API get user details
 	result = api.get_user(user_id=users)
 
 	# Check whether the user is already present in mongo
 	if users not in allUserIDs:
 		# Insert into mongo
-		insertMongo = db.followerDetails.insert_one({'id':users})
+		insertMongo = db.followerID.insert_one({'id':users})
 
 	# Get followers id of user
 	try:
@@ -69,22 +68,16 @@ for users in userList:
 	    followerids = []
 	    for page in c.pages():
 	        followerids.append(page)
+	    friendsids = []
+	    for page in c1.pages():
+	        friendsids.append(page)
 
 	except tweepy.TweepError:
 	    print "tweepy.TweepError="#, tweepy.TweepError
 	except:
 	    e = sys.exc_info()[0]
 	    print "Error: %s" % e
-
-	followerDetailsArr = []
 	print followerids[0]
-	for followers in followerids[0]:
-	    # Insert into mongo
-	    print followers
-	    result = api.get_user(user_id=followers)
-	    followerDetailsArr.append(result._json)
-	print len(followerDetailsArr)
-	db.followerDetails.update({'id':users}, {'$push': {"changes": {"timestamp": datetime.datetime.now(), "details": followerDetailsArr}}}, False, True)
-
-
-	
+	print friendsids[0]
+	with open("../data/" + str(users) + '_TwitterFollower_followers_friends.csv','a') as fp:
+		fp.write(str(datetime.datetime.now()) + "," + str(users) + "," + str(followerids) + "," + str(friendsids) + "\n")

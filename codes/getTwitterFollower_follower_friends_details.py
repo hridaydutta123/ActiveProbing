@@ -44,8 +44,8 @@ auth.set_access_token(ACCESS_KEY, ACCESS_SECRET)
 #search
 api = tweepy.API(auth)
 
-# Get list of userIDs in mongo
-allUserIDs = db.followerDetails.distinct("id")
+# # Get list of userIDs in mongo
+# allUserIDs = db.followerDetails.distinct("id")
 
 userList = [956233635325132800, 170995068]
 for users in userList:
@@ -53,10 +53,10 @@ for users in userList:
 	# Tweepy API get user details
 	result = api.get_user(user_id=users)
 
-	# Check whether the user is already present in mongo
-	if users not in allUserIDs:
-		# Insert into mongo
-		insertMongo = db.followerDetails.insert_one({'id':users})
+	# # Check whether the user is already present in mongo
+	# if users not in allUserIDs:
+	# 	# Insert into mongo
+	# 	insertMongo = db.followerDetails.insert_one({'id':users})
 
 	# Get followers id of user
 	try:
@@ -70,21 +70,37 @@ for users in userList:
 	    for page in c.pages():
 	        followerids.append(page)
 
+	    friendsids = []
+	    for page in c1.pages():
+	        friendsids.append(page)
 	except tweepy.TweepError:
 	    print "tweepy.TweepError="#, tweepy.TweepError
 	except:
 	    e = sys.exc_info()[0]
 	    print "Error: %s" % e
 
-	followerDetailsArr = []
+	followers_follower = []
+	followers_friends = []
 	print followerids[0]
 	for followers in followerids[0]:
-	    # Insert into mongo
-	    print followers
-	    result = api.get_user(user_id=followers)
-	    followerDetailsArr.append(result._json)
-	print len(followerDetailsArr)
-	db.followerDetails.update({'id':users}, {'$push': {"changes": {"timestamp": datetime.datetime.now(), "details": followerDetailsArr}}}, False, True)
+	    try:
+		    api = tweepy.API(auth, wait_on_rate_limit=True, wait_on_rate_limit_notify=True, compression=True)
 
+		    # Get followerids & friendsids of user
+		    c = tweepy.Cursor(api.followers_ids, user_id = followers)
+		    c1 = tweepy.Cursor(api.friends_ids, user_id = followers)
+
+		    followerids = []
+		    for page in c.pages():
+		        followerids.append(page)
+
+		    friendsids = []
+		    for page in c1.pages():
+		        friendsids.append(page)
+		except tweepy.TweepError:
+		    print "tweepy.TweepError="#, tweepy.TweepError
+		except:
+		    e = sys.exc_info()[0]
+		    print "Error: %s" % e
 
 	
