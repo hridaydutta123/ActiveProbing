@@ -41,17 +41,17 @@ auth.set_access_token(ACCESS_KEY, ACCESS_SECRET)
 
 #search
 api = tweepy.API(auth)
-userList = [956233635325132800]
+userList = [956233635325132800, 891387302781386752, 958587449416044544]
 tweets = []
 
 for users in userList:
 	for status in tweepy.Cursor(api.user_timeline, users).items():
 		retweeters = []
 		for reTweet in api.retweets(status._json['id'],100):
-			print reTweet.user.id, reTweet.user.screen_name, reTweet.user.name
+			#print reTweet.user.id, reTweet.user.screen_name, reTweet.user.name
 			#print reTweet._json['id_str'], reTweet._json['user']['id'], reTweet._json['retweeted_status']['id']
-			retweeters.append(reTweet._json['user']['name'])
+			retweeters.append(reTweet._json['user']['id'])
 
-		with open("../data/" + str(users) + "_retweeterId_details.csv","a") as fp:
+		with open("/home/hridoyd/ActiveProbing/data/" + str(users) + "_retweeterId_details.csv","a") as fp:
 				fp.write(str(datetime.datetime.now()) + "," + str(users) + "," + str(status._json['id']) + "," + str(retweeters) + "\n\n")
 		

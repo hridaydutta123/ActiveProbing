@@ -46,8 +46,9 @@ tweets = []
 
 for users in userList:
 	for status in tweepy.Cursor(api.user_timeline, users).items():
-		with open("../data/" + str(users) + "_tweet_details.csv","a") as fp:
-			fp.write(str(datetime.datetime.now()) + "," + str(users) + "," + str(status._json) + "\n")
+		with open("/home/hridoyd/ActiveProbing/data/" + str(users) + "_tweet_details.csv","a") as fp:
+			fp.write(str(datetime.datetime.now()) + "," + str(users) + "," + str(status._json) + "\n\n")
+		fp.close()
 		#insertMongo = db.tweets.insert_one(status._json)
 		# for reTweet in api.retweets(status._json['id'],200):
 		# 	details = reTweet._json

@@ -41,7 +41,7 @@ auth.set_access_token(ACCESS_KEY, ACCESS_SECRET)
 
 #search
 api = tweepy.API(auth)
-userList = [956233635325132800]
+userList = [956233635325132800, 891387302781386752, 958587449416044544]
 tweets = []
 
 for users in userList:
@@ -58,6 +58,6 @@ for users in userList:
 			except Exception,e:
 			    print "Error: %s" % e[0][0]['code']
 	
-		with open("../data/" + str(users) + "_retweeter_details.csv","a") as fp:
+		with open("/home/hridoyd/ActiveProbing/data/" + str(users) + "_retweeter_details.csv","a") as fp:
 				fp.write(str(datetime.datetime.now()) + "," + str(users) + "," + str(status._json['id']) + "," + str(retweeter_details) + "\n\n")
 		
